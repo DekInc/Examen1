@@ -1,0 +1,69 @@
+﻿@{
+    ViewBag.Title = "Home Page";
+}
+<div class="jumbotron">
+    <h1>Examen Hilmer Campos</h1>    
+    <div class="container">
+        <div class="row">
+            <div class="col">
+                <textarea id="TxtHtml" rows="10" class="form-control"></textarea>                
+            </div>
+        </div>
+        <br />
+        <div class="row">
+            <div class="col">
+                <button id="btnEnviar" class="btn btn-primary" type="button">Convertir a docx &nbsp; <div id="spinner1" class="spinner-border text-danger" style="display: none"></div></button>
+            </div>
+        </div>
+    </div>    
+</div>
+<script type="text/javascript">
+    var area1 = null;    
+    function crearEditor() {
+        area1 = new nicEditor({fullPanel : true}).panelInstance('TxtHtml',{hasPanel : true});
+    }    
+    function EnviarHtmlContent() {
+        $('#spinner1').show();
+        var editorContenido = nicEditors.findEditor('TxtHtml').getContent();
+        $.ajax({
+            url: '@Url.Action("CrearWord")',
+            method: "POST",
+            dataType: 'binary',
+            data: { "TxtHtml" : editorContenido }
+            //success: function (response) {
+            //    $('#spinner1').hide();
+            //    var myWindow = window.open("", "MsgWindow", "width=800,height=600");
+            //    myWindow.document.write(response);
+            //},
+            //error: function (res) {   
+            //    $('#spinner1').hide();
+            //    var myWindow = window.open("", "MsgWindow", "width=800,height=600");
+            //    myWindow.document.write(res.responseText);
+            //}
+        }).then(function (data) {
+                $('#spinner1').hide();
+                var downloadLink = document.createElement('a')
+                downloadLink.target = '_blank'
+                downloadLink.download = 'NuevoDocumento.docx'
+                var blob = new Blob([data], { type: 'application/wordapplication/vnd.openxmlformats-officedocument.wordprocessingml.document' })
+                var URL = window.URL || window.webkitURL
+                var downloadUrl = URL.createObjectURL(blob)
+                downloadLink.href = downloadUrl
+                document.body.append(downloadLink)
+                downloadLink.click()
+                document.body.removeChild(downloadLink);
+                URL.revokeObjectURL(downloadUrl);
+            })
+            .catch(function (err) {
+                $('#spinner1').hide();
+                var myWindow = window.open("", "MsgWindow", "width=800,height=600");
+                myWindow.document.write(err);
+            });;
+    }
+    $( document ).ready(function() {
+        $('#btnEnviar').on('click', function () {
+            EnviarHtmlContent();
+        });
+        bkLib.onDomLoaded(function() { crearEditor() });
+    });
+</script>
